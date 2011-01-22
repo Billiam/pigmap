@@ -366,7 +366,8 @@ void writeHTML(const RenderJob& rj, const string& htmlpath)
 	if (!replace(templateText, "{tileSize}", tostring(rj.mp.tileSize())) ||
 	    !replace(templateText, "{B}", tostring(rj.mp.B)) ||
 	    !replace(templateText, "{T}", tostring(rj.mp.T)) ||
-	    !replace(templateText, "{baseZoom}", tostring(rj.mp.baseZoom)))
+	    !replace(templateText, "{baseZoom}", tostring(rj.mp.baseZoom)) ||
+	    !replace(templateText, "{lastRun}", tostring(time(NULL))))
 		return;
 	string htmlOutPath = rj.outputpath + "/pigmap-default.html";
 	ofstream outfile(htmlOutPath.c_str());
