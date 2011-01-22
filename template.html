@@ -16,8 +16,7 @@
     T:            {T},
     maxZoom:      {baseZoom}
   };
-  
-  var lastUpdated = new Date({lastRun});
+  var lastUpdated = {lastRun};
   
   var markerData=[
 	{"msg": "center of chunk (0,0) at sea level", "y": 64, "x": 8, "z": 8}
@@ -120,9 +119,12 @@
   
   CoordMapType.prototype.getTile = function(coord, zoom, ownerDocument) {
     var div = ownerDocument.createElement('DIV');
-    div.innerHTML = "(" + coord.x + ", " + coord.y + ", " + zoom + ")";
-    div.innerHTML += "<br />";
-    div.innerHTML += MCMapOptions.getTileUrl(coord, zoom);
+    var html = "(" + coord.x + ", " + coord.y + ", " + zoom + ")"
+    + "<br />"
+    + MCMapOptions.getTileUrl(coord, zoom);
+    
+    div.innerHTML = html;
+    
     div.style.width = this.tileSize.width + 'px';
     div.style.height = this.tileSize.height + 'px';
     div.style.fontSize = '10';
@@ -155,6 +157,58 @@
    }
   }
   
+  /**
+   * https://gist.github.com/58761
+   **/
+  var DateHelper = {
+    // Takes the format of "Jan 15, 2007 15:45:00 GMT" and converts it to a relative time
+    // Ruby strftime: %b %d, %Y %H:%M:%S GMT
+    time_ago_in_words_with_parsing: function(from) {
+      var date = new Date; 
+      date.setTime(Date.parse(from));
+      return this.time_ago_in_words(date);
+    },
+    
+    time_ago_in_words: function(from) {
+      return this.distance_of_time_in_words(new Date, from);
+    },
+    distance_of_time_in_words: function(to, from) {
+      var distance_in_seconds = Math.floor((to - from) / 1000);
+      var distance_in_minutes = Math.floor(distance_in_seconds / 60);
+  
+      if (distance_in_seconds < 45) { return [distance_in_seconds + ' second' + (distance_in_seconds != 1 ? 's' :'') + ' ago', 1] }
+      if (distance_in_minutes == 0) { return ['less than a minute ago', 60 - distance_in_seconds%60] }
+      if (distance_in_minutes == 1) { return ['a minute ago', 60 - distance_in_seconds%60 ]}
+      if (distance_in_minutes < 45) { return [distance_in_minutes + ' minutes ago', 60 - distance_in_seconds%60 ] }
+      if (distance_in_minutes < 90) { return ['about 1 hour ago', 3600 - (distance_in_seconds)%3600 ] }
+      if (distance_in_minutes < 1440) { return ['about ' + Math.floor(distance_in_minutes / 60) + ' hours ago', 3600 - distance_in_seconds%3600] }
+      if (distance_in_minutes < 2880) { return ['1 day ago', 86400 - distance_in_seconds%86400] }
+      if (distance_in_minutes < 43200) { return [Math.floor(distance_in_minutes / 1440) + ' days ago', 86400 - distance_in_seconds%86400] }
+      if (distance_in_minutes < 86400) { return ['about 1 month ago', 2592000 - distance_in_seconds%2592000] }
+      if (distance_in_minutes < 525960) { return [Math.floor(distance_in_minutes / 43200) + ' months ago', 2592000 - distance_in_seconds%2592000] }
+      if (distance_in_minutes < 1051199) { return ['about 1 year ago', 31557600 - distance_in_seconds%31557600] }
+      return ['over ' + Math.floor(distance_in_minutes / 525960) + ' years ago', 31557600 - distance_in_seconds%31557600];
+    }
+  };
+    
+  var dateUpdater = {
+    startTime : null,
+    timer : null,
+    updateNode : null,
+    
+    init : function(time) {
+      this.startTime = time;
+      this.updateNode = document.getElementById('updateTime');
+      this.update();
+    },
+    update : function() {
+      var This = this;
+      var time = DateHelper.time_ago_in_words(this.startTime);
+      this.updateNode.innerHTML = '<span class="updatedLabel">Last Updated: </span>' + time[0];
+      this.timer = setTimeout(function(){This.update()}, time[1] * 1000);
+    }
+  }
+  
   function initialize() {
     var mapOptions = {
       zoom: config.defaultZoom,
@@ -175,11 +229,13 @@
     map.setMapTypeId('mcmap');
 	
     initMarkers();
-
+    dateUpdater.init(lastUpdated*1000);
+    
   }
 </script>
 </head>
 <body onload="initialize()">
   <div id="mcmap" style="width:100%; height:100%"></div>
+  <div id="updateTime"></div>
 </body>
 </html>
